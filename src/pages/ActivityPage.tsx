@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef, X } from 'lucide-react';
+import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef, X, Flame } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -17,6 +17,19 @@ const GOAL_MULTIPLIERS: Record<string, number> = {
   'Fat Loss': 1.1,
   Maintenance: 1.0,
   'Muscle Gain': 1.25,
+};
+
+const TDEE_MULTIPLIERS: Record<string, number> = {
+  Sedentary: 1.2,
+  Moderate: 1.375,
+  Active: 1.55,
+  Athlete: 1.725,
+};
+
+const CALORIE_GOALS: Record<string, { label: string; delta: number; color: string }> = {
+  'Fat Loss': { label: 'Fat Loss', delta: -500, color: 'text-error' },
+  Maintenance: { label: 'Maintain', delta: 0, color: 'text-primary' },
+  'Muscle Gain': { label: 'Build Muscle', delta: 300, color: 'text-tertiary' },
 };
 
 const FOOD_SOURCES = [
@@ -73,6 +86,44 @@ export const ActivityPage = () => {
   };
 
   const removeIntake = (id: number) => setIntakeLog(prev => prev.filter(i => i.id !== id));
+
+  // Calorie calculator
+  const [calHeight, setCalHeight] = useState('');
+  const [calAge, setCalAge] = useState('');
+  const [calGender, setCalGender] = useState<'male' | 'female'>('male');
+  const [calGoal, setCalGoal] = useState('Maintenance');
+
+  const calorieResult = useMemo(() => {
+    const w = parseFloat(weight);
+    const h = parseFloat(calHeight);
+    const a = parseFloat(calAge);
+    if (!w || !h || !a || w <= 0 || h <= 0 || a <= 0) return null;
+    const kg = unit === 'lbs' ? w / 2.205 : w;
+    const bmr = calGender === 'male'
+      ? 10 * kg + 6.25 * h - 5 * a + 5
+      : 10 * kg + 6.25 * h - 5 * a - 161;
+    const tdee = Math.round(bmr * TDEE_MULTIPLIERS[activityLevel]);
+    const target = tdee + CALORIE_GOALS[calGoal].delta;
+    return { bmr: Math.round(bmr), tdee, target };
+  }, [weight, unit, calHeight, calAge, calGender, activityLevel, calGoal]);
+
+  // Calorie intake log
+  const [calLog, setCalLog] = useState<{ id: number; food: string; kcal: number }[]>([]);
+  const [calFood, setCalFood] = useState('');
+  const [calKcal, setCalKcal] = useState('');
+
+  const totalKcal = calLog.reduce((sum, i) => sum + i.kcal, 0);
+  const calProgressPct = calorieResult ? Math.min(100, Math.round((totalKcal / calorieResult.target) * 100)) : 0;
+
+  const addCalEntry = () => {
+    const k = parseFloat(calKcal);
+    if (!calFood.trim() || !k || k <= 0) return;
+    setCalLog(prev => [...prev, { id: Date.now(), food: calFood.trim(), kcal: k }]);
+    setCalFood('');
+    setCalKcal('');
+  };
+
+  const removeCalEntry = (id: number) => setCalLog(prev => prev.filter(i => i.id !== id));
 
   const handleLogSubmit = () => {
     toast('Session logged successfully!');
@@ -538,6 +589,214 @@ export const ActivityPage = () => {
               ))
             )}
           </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Calorie Calculator */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Inputs */}
+        <div className="lg:col-span-5 bg-surface-container rounded-xl p-8 shadow-xl">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center">
+              <Flame size={20} className="text-error" />
+            </div>
+            <div>
+              <h3 className="font-headline font-bold text-xl">Calorie Calculator</h3>
+              <p className="text-on-surface-variant text-xs">TDEE based on Mifflin-St Jeor</p>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            {/* Gender */}
+            <div className="space-y-2">
+              <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Sex</label>
+              <div className="flex bg-surface-container-lowest rounded-xl overflow-hidden">
+                {(['male', 'female'] as const).map(g => (
+                  <button key={g} onClick={() => setCalGender(g)}
+                    className={cn("flex-1 py-3 font-bold text-sm capitalize transition-colors", calGender === g ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface')}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Weight — reuses protein calc weight/unit */}
+            <div className="space-y-2">
+              <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Weight <span className="normal-case">(shared with protein calc)</span></label>
+              <div className="flex gap-2">
+                <input type="number" placeholder={unit === 'kg' ? 'e.g. 75' : 'e.g. 165'} value={weight} onChange={e => setWeight(e.target.value)}
+                  className="flex-1 bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-primary transition-all" />
+                <div className="flex bg-surface-container-lowest rounded-xl overflow-hidden">
+                  {(['kg', 'lbs'] as const).map(u => (
+                    <button key={u} onClick={() => setUnit(u)}
+                      className={cn("px-4 font-bold text-sm transition-colors", unit === u ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface')}>
+                      {u}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Height */}
+            <div className="space-y-2">
+              <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Height (cm)</label>
+              <input type="number" placeholder="e.g. 175" value={calHeight} onChange={e => setCalHeight(e.target.value)}
+                className="w-full bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-primary transition-all" />
+            </div>
+
+            {/* Age */}
+            <div className="space-y-2">
+              <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Age</label>
+              <input type="number" placeholder="e.g. 25" value={calAge} onChange={e => setCalAge(e.target.value)}
+                className="w-full bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-primary transition-all" />
+            </div>
+
+            {/* Activity — reuses protein calc level */}
+            <div className="space-y-2">
+              <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Activity Level <span className="normal-case">(shared)</span></label>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.keys(TDEE_MULTIPLIERS).map(level => (
+                  <button key={level} onClick={() => setActivityLevel(level)}
+                    className={cn("py-3 rounded-xl text-sm font-bold transition-colors", activityLevel === level ? 'bg-primary text-on-primary' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-bright')}>
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Goal */}
+            <div className="space-y-2">
+              <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Goal</label>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.keys(CALORIE_GOALS).map(g => (
+                  <button key={g} onClick={() => setCalGoal(g)}
+                    className={cn("py-3 rounded-xl text-xs font-bold transition-colors", calGoal === g ? 'bg-error text-white' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-bright')}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* TDEE breakdown */}
+          <div className={cn("rounded-xl p-8 transition-all", calorieResult ? 'bg-gradient-to-br from-error/10 to-surface-container border border-error/20' : 'bg-surface-container-low border border-outline-variant/5')}>
+            {calorieResult ? (
+              <div className="space-y-6">
+                <div className="flex items-end justify-between">
+                  <div>
+                    <span className="font-label text-[10px] uppercase tracking-widest text-error font-bold block mb-2">Daily Target</span>
+                    <div className="font-headline font-black text-7xl text-on-surface">{calorieResult.target.toLocaleString()}<span className="text-2xl font-normal text-on-surface-variant ml-2">kcal</span></div>
+                    <p className="text-on-surface-variant text-sm mt-1">{CALORIE_GOALS[calGoal].label} · {activityLevel}</p>
+                  </div>
+                  <div className="text-right space-y-2">
+                    <div className="bg-surface-container-high px-5 py-3 rounded-xl">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">BMR</span>
+                      <span className="font-headline font-black text-xl text-on-surface">{calorieResult.bmr.toLocaleString()} kcal</span>
+                    </div>
+                    <div className="bg-surface-container-high px-5 py-3 rounded-xl">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">TDEE</span>
+                      <span className="font-headline font-black text-xl text-primary">{calorieResult.tdee.toLocaleString()} kcal</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Goal breakdown */}
+                <div className="grid grid-cols-3 gap-3 pt-4 border-t border-outline-variant/10">
+                  {Object.entries(CALORIE_GOALS).map(([key, val]) => {
+                    const cals = calorieResult.tdee + val.delta;
+                    return (
+                      <div key={key} className={cn("bg-surface-container-high p-4 rounded-xl text-center", calGoal === key && 'ring-1 ring-primary/40')}>
+                        <span className={cn("text-[10px] font-bold uppercase tracking-widest block mb-1", val.color)}>{val.label}</span>
+                        <span className="font-headline font-black text-lg text-on-surface">{cals.toLocaleString()}</span>
+                        <span className="text-xs text-on-surface-variant block">kcal/day</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                <Flame size={36} className="text-on-surface-variant/30" />
+                <p className="text-on-surface-variant font-medium">Fill in your details to calculate your TDEE</p>
+              </div>
+            )}
+          </div>
+
+          {/* Calorie intake log */}
+          <div className="bg-surface-container rounded-xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-headline font-bold text-lg">Today's Calorie Intake</h4>
+              {calLog.length > 0 && (
+                <button onClick={() => setCalLog([])} className="text-xs font-bold text-on-surface-variant hover:text-error transition-colors uppercase tracking-widest">
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Progress */}
+            <div className="mb-5">
+              <div className="flex items-end justify-between mb-2">
+                <span className="font-headline font-black text-3xl text-on-surface">
+                  {totalKcal.toLocaleString()}<span className="text-sm font-normal text-on-surface-variant ml-2">kcal eaten</span>
+                </span>
+                <span className="text-sm font-bold text-on-surface-variant">
+                  {calorieResult ? `${calorieResult.target.toLocaleString()} target` : 'Set target above'}
+                </span>
+              </div>
+              <div className="w-full h-3 bg-surface-container-low rounded-full overflow-hidden">
+                <motion.div
+                  className={cn("h-full rounded-full", calProgressPct >= 100 ? 'bg-error' : 'bg-tertiary')}
+                  animate={{ width: `${calProgressPct}%` }}
+                  transition={{ type: 'spring', stiffness: 80, damping: 20 }}
+                />
+              </div>
+              {calorieResult && (
+                <div className="flex justify-between mt-1">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{calProgressPct}% of target</span>
+                  {calorieResult.target - totalKcal > 0
+                    ? <span className="text-[10px] font-bold text-tertiary">{(calorieResult.target - totalKcal).toLocaleString()} kcal remaining</span>
+                    : <span className="text-[10px] font-bold text-error">Over target</span>
+                  }
+                </div>
+              )}
+            </div>
+
+            {/* Add entry */}
+            <div className="flex gap-2 mb-4">
+              <input type="text" placeholder="Meal / food" value={calFood} onChange={e => setCalFood(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addCalEntry()}
+                className="flex-1 bg-surface-container-lowest border-none rounded-xl text-on-surface p-3 text-sm focus:ring-2 focus:ring-error transition-all" />
+              <input type="number" placeholder="kcal" value={calKcal} onChange={e => setCalKcal(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addCalEntry()}
+                className="w-28 bg-surface-container-lowest border-none rounded-xl text-on-surface p-3 text-sm focus:ring-2 focus:ring-error transition-all" />
+              <button onClick={addCalEntry}
+                className="px-4 bg-error text-white rounded-xl font-bold text-sm hover:bg-error/80 active:scale-95 transition-all flex items-center gap-1">
+                <Plus size={16} /> Add
+              </button>
+            </div>
+
+            {/* Log list */}
+            <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
+              <AnimatePresence>
+                {calLog.length === 0 ? (
+                  <p className="text-center text-on-surface-variant text-sm py-4">No meals logged yet</p>
+                ) : calLog.map(item => (
+                  <motion.div key={item.id} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 20 }}
+                    className="flex items-center justify-between bg-surface-container-low px-4 py-2.5 rounded-xl group">
+                    <span className="text-sm font-medium text-on-surface">{item.food}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-headline font-black text-error text-base">{item.kcal.toLocaleString()} kcal</span>
+                      <button onClick={() => removeCalEntry(item.id)} className="text-on-surface-variant hover:text-error transition-colors opacity-0 group-hover:opacity-100">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
 
