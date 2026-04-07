@@ -1,15 +1,75 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Target, Zap, Moon, ArrowRight, ArrowLeft, Filter, Search, Plus, TrendingUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
+import { Modal } from '../components/Modal';
+import { useToast } from '../components/Toast';
+
+const TIMELINE_ENTRIES = [
+  {
+    date: 'Oct 24, 2023',
+    title: 'Deep Focus Achieved',
+    preview: 'Completed the core architecture for the new Design System. Managed to stay focused for 4 hours straight without digital distractions. Tomorrow, I need to refine the token mapping...',
+    full: 'Completed the core architecture for the new Design System. Managed to stay focused for 4 hours straight without digital distractions. Tomorrow, I need to refine the token mapping and finalize the color token exports. Energy was at a 9/10 today — night sessions continue to be the most productive. Key insight: batching similar tasks together yields significantly better output than context switching.',
+    align: 'left',
+  },
+  {
+    date: 'Oct 23, 2023',
+    title: 'Friction and Growth',
+    preview: 'Struggled with the layout logic on mobile. Realized I was over-complicating the grid structure. Improvement: Start with simple sketches next time before coding...',
+    full: 'Struggled with the layout logic on mobile. Realized I was over-complicating the grid structure. Improvement: Start with simple sketches next time before coding. Also hit a wall at 2am but pushed through to complete the main feature. Lesson: rest breaks every 90 minutes actually improve throughput. Tomorrow I will apply the 1-3-5 task prioritization method.',
+    align: 'right',
+  },
+];
 
 export const DailyPage = () => {
+  const { toast } = useToast();
+
+  // Mood state (index 1 = Zap is default active)
+  const [selectedMood, setSelectedMood] = useState(1);
+
+  // Textarea values
+  const [wentWell, setWentWell] = useState('');
+  const [improve, setImprove] = useState('');
+  const [tomorrow, setTomorrow] = useState('');
+
+  // Timeline entry modal
+  const [timelineModal, setTimelineModal] = useState<typeof TIMELINE_ENTRIES[0] | null>(null);
+
+  const handleCommit = () => {
+    if (!wentWell && !improve && !tomorrow) {
+      toast('Please fill in at least one field.', 'error');
+      return;
+    }
+    toast('Daily entry committed!');
+    setWentWell('');
+    setImprove('');
+    setTomorrow('');
+  };
+
+  const moodIcons = [
+    { icon: '😊', label: 'Happy' },
+    { icon: <Zap size={16} />, label: 'Energized' },
+    { icon: '🧘', label: 'Calm' },
+    { icon: <Moon size={16} />, label: 'Tired' },
+  ];
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Timeline entry modal */}
+      <Modal open={timelineModal !== null} onClose={() => setTimelineModal(null)} title={timelineModal?.title ?? ''}>
+        {timelineModal && (
+          <div className="space-y-4">
+            <span className="font-label text-xs uppercase tracking-widest text-primary font-bold">{timelineModal.date}</span>
+            <p className="text-on-surface-variant leading-relaxed">{timelineModal.full}</p>
+          </div>
+        )}
+      </Modal>
+
       {/* Dashboard Header */}
       <div className="mb-16">
         <span className="font-label text-xs uppercase tracking-widest text-primary font-bold block mb-4">Midnight Reflection</span>
@@ -26,24 +86,42 @@ export const DailyPage = () => {
               <Zap size={20} className="text-primary" />
               <label className="font-headline font-bold text-xl">What did I do well today?</label>
             </div>
-            <textarea className="w-full bg-surface-container-lowest border-none rounded-lg p-4 text-on-surface placeholder:text-outline/40 focus:ring-2 focus:ring-primary min-h-[120px] transition-all" placeholder="Celebrate a win, however small..."></textarea>
+            <textarea
+              className="w-full bg-surface-container-lowest border-none rounded-lg p-4 text-on-surface placeholder:text-outline/40 focus:ring-2 focus:ring-primary min-h-[120px] transition-all"
+              placeholder="Celebrate a win, however small..."
+              value={wentWell}
+              onChange={e => setWentWell(e.target.value)}
+            ></textarea>
           </div>
           <div className="glass-card rounded-xl p-8 border border-outline-variant/10">
             <div className="flex items-center gap-3 mb-6">
               <TrendingUp size={20} className="text-tertiary" />
               <label className="font-headline font-bold text-xl">What could I improve?</label>
             </div>
-            <textarea className="w-full bg-surface-container-lowest border-none rounded-lg p-4 text-on-surface placeholder:text-outline/40 focus:ring-2 focus:ring-primary min-h-[120px] transition-all" placeholder="Identify the friction points..."></textarea>
+            <textarea
+              className="w-full bg-surface-container-lowest border-none rounded-lg p-4 text-on-surface placeholder:text-outline/40 focus:ring-2 focus:ring-primary min-h-[120px] transition-all"
+              placeholder="Identify the friction points..."
+              value={improve}
+              onChange={e => setImprove(e.target.value)}
+            ></textarea>
           </div>
           <div className="glass-card rounded-xl p-8 border border-outline-variant/10">
             <div className="flex items-center gap-3 mb-6">
               <Target size={20} className="text-secondary" />
               <label className="font-headline font-bold text-xl">What's my focus for tomorrow?</label>
             </div>
-            <textarea className="w-full bg-surface-container-lowest border-none rounded-lg p-4 text-on-surface placeholder:text-outline/40 focus:ring-2 focus:ring-primary min-h-[120px] transition-all" placeholder="Define the primary objective..."></textarea>
+            <textarea
+              className="w-full bg-surface-container-lowest border-none rounded-lg p-4 text-on-surface placeholder:text-outline/40 focus:ring-2 focus:ring-primary min-h-[120px] transition-all"
+              placeholder="Define the primary objective..."
+              value={tomorrow}
+              onChange={e => setTomorrow(e.target.value)}
+            ></textarea>
           </div>
           <div className="flex justify-end pt-4">
-            <button className="bg-primary text-on-primary font-bold px-10 py-4 rounded-xl hover:translate-y-[-2px] transition-all active:scale-95 shadow-[0_10px_20px_rgba(192,193,255,0.2)]">
+            <button
+              onClick={handleCommit}
+              className="bg-primary text-on-primary font-bold px-10 py-4 rounded-xl hover:translate-y-[-2px] transition-all active:scale-95 shadow-[0_10px_20px_rgba(192,193,255,0.2)]"
+            >
               Commit Entry
             </button>
           </div>
@@ -57,17 +135,13 @@ export const DailyPage = () => {
               <div>
                 <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Current Mood</span>
                 <div className="flex gap-2">
-                  {[
-                    { icon: '😊', active: false },
-                    { icon: <Zap size={16} />, active: true },
-                    { icon: '🧘', active: false },
-                    { icon: <Moon size={16} />, active: false }
-                  ].map((mood, i) => (
-                    <button 
-                      key={i} 
+                  {moodIcons.map((mood, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedMood(i)}
                       className={cn(
                         "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
-                        mood.active ? "bg-primary text-on-primary" : "bg-surface-container-high text-on-surface-variant hover:bg-primary/20"
+                        selectedMood === i ? "bg-primary text-on-primary" : "bg-surface-container-high text-on-surface-variant hover:bg-primary/20"
                       )}
                     >
                       {mood.icon}
@@ -85,10 +159,10 @@ export const DailyPage = () => {
             </div>
           </div>
           <div className="relative h-64 rounded-xl overflow-hidden group">
-            <img 
-              alt="Inspiration" 
-              className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAce9Nx5b06qp79MI6HQi--yGBSx8t8WIkSQWBJpRpXMww9ukQzFhudErkD-CoIeKDE27L7m3a2siLZO-Z6uII3gh7FttpAkf6ldapkBd1lwdiZ9lfYgRyk4ZSI-D6PzjYlfq6Hd08aHcchsfmQxu0kyHXLIy0pBv9nfHk5FFwcZmLP9hqJFxgRRCnmdV-6li6Yk6xhgYAF78GrvnSLWxNtirmAY4StFz_SMUoFtIYv9Umm_gezCKHPZIG2HOV60UeSWizI4nclhpAs" 
+            <img
+              alt="Inspiration"
+              className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAce9Nx5b06qp79MI6HQi--yGBSx8t8WIkSQWBJpRpXMww9ukQzFhudErkD-CoIeKDE27L7m3a2siLZO-Z6uII3gh7FttpAkf6ldapkBd1lwdiZ9lfYgRyk4ZSI-D6PzjYlfq6Hd08aHcchsfmQxu0kyHXLIy0pBv9nfHk5FFwcZmLP9hqJFxgRRCnmdV-6li6Yk6xhgYAF78GrvnSLWxNtirmAY4StFz_SMUoFtIYv9Umm_gezCKHPZIG2HOV60UeSWizI4nclhpAs"
               referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
@@ -104,10 +178,16 @@ export const DailyPage = () => {
         <div className="flex items-center justify-between mb-12">
           <h3 className="font-headline text-3xl font-bold tracking-tight">Timeline</h3>
           <div className="flex gap-4">
-            <button className="text-on-surface-variant hover:text-primary transition-colors">
+            <button
+              onClick={() => toast('Filter/Search coming soon', 'info')}
+              className="text-on-surface-variant hover:text-primary transition-colors"
+            >
               <Filter size={20} />
             </button>
-            <button className="text-on-surface-variant hover:text-primary transition-colors">
+            <button
+              onClick={() => toast('Filter/Search coming soon', 'info')}
+              className="text-on-surface-variant hover:text-primary transition-colors"
+            >
               <Search size={20} />
             </button>
           </div>
@@ -115,17 +195,20 @@ export const DailyPage = () => {
         <div className="relative ml-4 md:ml-0">
           {/* Vertical Line */}
           <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/40 via-surface-container-high to-transparent md:-translate-x-1/2 hidden md:block"></div>
-          
+
           {/* Timeline Entry 1 */}
           <div className="relative grid md:grid-cols-2 gap-12 mb-20 group">
             <div className="md:text-right">
-              <span className="font-label text-xs uppercase tracking-widest text-primary font-bold">Oct 24, 2023</span>
-              <h4 className="font-headline text-2xl font-bold mt-2 text-on-surface">Deep Focus Achieved</h4>
+              <span className="font-label text-xs uppercase tracking-widest text-primary font-bold">{TIMELINE_ENTRIES[0].date}</span>
+              <h4 className="font-headline text-2xl font-bold mt-2 text-on-surface">{TIMELINE_ENTRIES[0].title}</h4>
             </div>
             <div className="absolute left-[-20px] md:left-1/2 w-3 h-3 bg-primary rounded-full md:-translate-x-1/2 top-2 shadow-[0_0_15px_rgba(192,193,255,0.6)]"></div>
             <div className="bg-surface-container p-6 rounded-xl border-l-2 border-primary/20 hover:border-primary/60 transition-all">
-              <p className="text-on-surface-variant line-clamp-3 leading-relaxed">Completed the core architecture for the new Design System. Managed to stay focused for 4 hours straight without digital distractions. Tomorrow, I need to refine the token mapping...</p>
-              <button className="mt-4 text-primary font-bold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              <p className="text-on-surface-variant line-clamp-3 leading-relaxed">{TIMELINE_ENTRIES[0].preview}</p>
+              <button
+                onClick={() => setTimelineModal(TIMELINE_ENTRIES[0])}
+                className="mt-4 text-primary font-bold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform"
+              >
                 View Full Entry <ArrowRight size={14} />
               </button>
             </div>
@@ -134,13 +217,16 @@ export const DailyPage = () => {
           {/* Timeline Entry 2 */}
           <div className="relative grid md:grid-cols-2 gap-12 mb-20 group">
             <div className="md:order-2">
-              <span className="font-label text-xs uppercase tracking-widest text-on-surface-variant font-bold">Oct 23, 2023</span>
-              <h4 className="font-headline text-2xl font-bold mt-2 text-on-surface">Friction and Growth</h4>
+              <span className="font-label text-xs uppercase tracking-widest text-on-surface-variant font-bold">{TIMELINE_ENTRIES[1].date}</span>
+              <h4 className="font-headline text-2xl font-bold mt-2 text-on-surface">{TIMELINE_ENTRIES[1].title}</h4>
             </div>
             <div className="absolute left-[-20px] md:left-1/2 w-3 h-3 bg-surface-container-high rounded-full md:-translate-x-1/2 top-2"></div>
             <div className="md:order-1 bg-surface-container p-6 rounded-xl border-r-2 border-transparent hover:border-tertiary/60 transition-all text-right">
-              <p className="text-on-surface-variant line-clamp-3 leading-relaxed">Struggled with the layout logic on mobile. Realized I was over-complicating the grid structure. Improvement: Start with simple sketches next time before coding...</p>
-              <button className="mt-4 text-on-surface-variant font-bold text-sm flex items-center justify-end gap-1 group-hover:-translate-x-1 transition-transform">
+              <p className="text-on-surface-variant line-clamp-3 leading-relaxed">{TIMELINE_ENTRIES[1].preview}</p>
+              <button
+                onClick={() => setTimelineModal(TIMELINE_ENTRIES[1])}
+                className="mt-4 text-on-surface-variant font-bold text-sm flex items-center justify-end gap-1 group-hover:-translate-x-1 transition-transform"
+              >
                 <ArrowLeft size={14} /> View Full Entry
               </button>
             </div>

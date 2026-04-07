@@ -1,28 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  Users, 
-  Heart, 
-  TrendingUp, 
-  BookOpen, 
-  UserCircle, 
+import {
+  Users,
+  Heart,
+  TrendingUp,
+  BookOpen,
   Menu,
-  Plus,
-  ChevronRight,
-  History,
-  Edit3,
   PersonStanding,
   Activity,
-  Zap,
-  Moon,
-  Target,
-  CheckCircle2,
-  AlertCircle,
-  Lightbulb,
-  ArrowRight,
-  ArrowLeft,
-  Filter,
-  Search,
   Layout
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
@@ -65,12 +50,17 @@ const SidebarItem = ({ to, icon: Icon, label }: NavItemProps) => (
 );
 
 export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   return (
     <div className="min-h-screen bg-background text-on-background selection:bg-primary/30">
       {/* Top Bar */}
       <header className="fixed top-0 w-full z-50 bg-background/60 backdrop-blur-xl flex items-center justify-between px-6 py-8 shadow-[0_20px_40px_rgba(6,14,32,0.4)]">
         <div className="flex items-center gap-4">
-          <button className="text-primary hover:bg-surface-bright/40 transition-colors p-2 rounded-lg active:scale-95 duration-200">
+          <button
+            onClick={() => setSidebarOpen(prev => !prev)}
+            className="text-primary hover:bg-surface-bright/40 transition-colors p-2 rounded-lg active:scale-95 duration-200"
+          >
             <Menu size={24} />
           </button>
           <h1 className="font-headline font-extrabold tracking-tighter text-4xl text-primary">Darren's HQ</h1>
@@ -84,9 +74,9 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
             <NavLink to="/daily" className={({ isActive }) => cn("font-label font-bold uppercase tracking-widest text-[10px] transition-colors", isActive ? "text-primary" : "text-on-surface-variant hover:text-white")}>Daily</NavLink>
           </nav>
           <div className="w-10 h-10 rounded-full border-2 border-primary-container overflow-hidden">
-            <img 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaO3iilhK_TsRQ7QZzFntGL_ZVzdkFrdKLXiPbhrA15s09B3YnsclIhG5vGlLLrExQ2zvPRS0G6HCfvV7eBaKQRsKaE1O5prMt0Vyrg64iDRHyvI50T_hn6t6ksHtZ5EVqzvWbHrB1sYEVxad5JNjDMDqpc4Kc8Eo5Llh4w9bKlzUVn2WoswnhVfttjHlLoF5Un1HRpB8WVk12vX6tNVA1OkOKTXcWAcmg5sKmUjk7gdJNxXQ0DUDToaupZ_sj05i1gsywtom5QrtD" 
-              alt="User" 
+            <img
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaO3iilhK_TsRQ7QZzFntGL_ZVzdkFrdKLXiPbhrA15s09B3YnsclIhG5vGlLLrExQ2zvPRS0G6HCfvV7eBaKQRsKaE1O5prMt0Vyrg64iDRHyvI50T_hn6t6ksHtZ5EVqzvWbHrB1sYEVxad5JNjDMDqpc4Kc8Eo5Llh4w9bKlzUVn2WoswnhVfttjHlLoF5Un1HRpB8WVk12vX6tNVA1OkOKTXcWAcmg5sKmUjk7gdJNxXQ0DUDToaupZ_sj05i1gsywtom5QrtD"
+              alt="User"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
@@ -94,8 +84,19 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
         </div>
       </header>
 
-      {/* Sidebar (Desktop) */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-[60] flex flex-col py-8 h-full w-80 bg-background rounded-r-3xl shadow-2xl shadow-black transition-transform duration-300">
+      {/* Sidebar backdrop overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-[55] bg-background/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-[60] flex flex-col py-8 h-full w-80 bg-background rounded-r-3xl shadow-2xl shadow-black transition-transform duration-300",
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
         <div className="px-8 mb-12">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-12 h-12 rounded-xl bg-primary-container p-0.5 flex items-center justify-center">
@@ -126,7 +127,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:pl-80 pt-32 pb-32 lg:pb-12 px-6 md:px-12 max-w-7xl mx-auto">
+      <main className="pt-32 pb-32 lg:pb-12 px-6 md:px-12 max-w-7xl mx-auto">
         {children}
       </main>
 

@@ -1,15 +1,130 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
+import { Modal } from '../components/Modal';
+import { useToast } from '../components/Toast';
 
 export const ActivityPage = () => {
+  const { toast } = useToast();
+
+  // Log Session modal
+  const [logOpen, setLogOpen] = useState(false);
+  const [logActivity, setLogActivity] = useState('Badminton');
+  const [logDuration, setLogDuration] = useState('');
+  const [logNotes, setLogNotes] = useState('');
+
+  // Training plan modal
+  const [planOpen, setPlanOpen] = useState(false);
+
+  // Activity detail modal
+  const [detailModal, setDetailModal] = useState<null | { name: string; desc: string; duration: string; date: string }>(null);
+
+  const handleLogSubmit = () => {
+    toast('Session logged successfully!');
+    setLogOpen(false);
+    setLogActivity('Badminton');
+    setLogDuration('');
+    setLogNotes('');
+  };
+
+  const activities = [
+    { name: 'Badminton Students', desc: 'Intensive coaching session • High intensity', duration: '120 MIN', date: 'Oct 12, 2024', icon: Activity, iconClass: 'bg-secondary-container/30 text-secondary' },
+    { name: 'Morning Strength', desc: 'Deadlifts and overhead press focus', duration: '75 MIN', date: 'Oct 11, 2024', icon: Dumbbell, iconClass: 'bg-tertiary-container/30 text-tertiary' },
+    { name: 'Hyrox Prep Run', desc: '5km Interval sprints • HR Zone 4', duration: '45 MIN', date: 'Oct 10, 2024', icon: Zap, iconClass: 'bg-primary-container/30 text-primary' },
+  ];
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Log Session Modal */}
+      <Modal open={logOpen} onClose={() => setLogOpen(false)} title="Log Session">
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <label className="font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant">Activity</label>
+            <select
+              className="w-full bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-primary transition-all"
+              value={logActivity}
+              onChange={e => setLogActivity(e.target.value)}
+            >
+              <option>Badminton</option>
+              <option>Gym</option>
+              <option>Running</option>
+              <option>Hyrox Prep</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant">Duration (minutes)</label>
+            <input
+              className="w-full bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-primary transition-all"
+              type="number"
+              placeholder="e.g. 60"
+              value={logDuration}
+              onChange={e => setLogDuration(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant">Notes</label>
+            <textarea
+              className="w-full bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-primary transition-all resize-none"
+              placeholder="Session notes..."
+              rows={3}
+              value={logNotes}
+              onChange={e => setLogNotes(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={handleLogSubmit}
+            className="w-full bg-primary text-on-primary font-bold py-4 rounded-xl active:scale-95 transition-transform shadow-lg shadow-primary/20"
+          >
+            Log Session
+          </button>
+        </div>
+      </Modal>
+
+      {/* Training Plan Modal */}
+      <Modal open={planOpen} onClose={() => setPlanOpen(false)} title="Weekly Training Plan">
+        <div className="space-y-4">
+          {[
+            { day: 'Monday', focus: 'Strength', details: 'Deadlifts 4x5 · Overhead Press 3x8 · Pull-ups 3x10' },
+            { day: 'Tuesday', focus: 'Badminton Coaching', details: 'Students session 2h · Footwork drills · Smash technique' },
+            { day: 'Wednesday', focus: 'Hyrox Prep', details: '5km run + 1km row + Wall Balls 100 reps' },
+            { day: 'Thursday', focus: 'Active Recovery', details: 'Yoga 30min · Mobility work · Ice bath' },
+            { day: 'Friday', focus: 'Hyrox Simulation', details: 'Full Hyrox simulation run — race pace effort' },
+            { day: 'Saturday', focus: 'Long Run', details: '10km easy pace · HR Zone 2 · Focus on breathing' },
+            { day: 'Sunday', focus: 'Rest', details: 'Complete rest or light walk only' },
+          ].map(item => (
+            <div key={item.day} className="bg-surface-container-low p-4 rounded-xl">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-on-surface">{item.day}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-full">{item.focus}</span>
+              </div>
+              <p className="text-sm text-on-surface-variant">{item.details}</p>
+            </div>
+          ))}
+        </div>
+      </Modal>
+
+      {/* Activity Detail Modal */}
+      <Modal open={detailModal !== null} onClose={() => setDetailModal(null)} title="Activity Details">
+        {detailModal && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-headline font-bold text-xl text-white">{detailModal.name}</h4>
+              <span className="font-headline font-black text-primary text-2xl">{detailModal.duration}</span>
+            </div>
+            <p className="text-on-surface-variant">{detailModal.desc}</p>
+            <div className="bg-surface-container-low p-4 rounded-xl">
+              <span className="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest block mb-1">Date</span>
+              <span className="font-bold">{detailModal.date}</span>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       {/* Bento Grid Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Hero Stats: Weekly Summary */}
@@ -39,9 +154,9 @@ export const ActivityPage = () => {
         {/* Hyrox Countdown Card */}
         <section className="md:col-span-4 row-span-2 relative overflow-hidden bg-surface-container-highest p-8 rounded-xl flex flex-col justify-between shadow-2xl">
           <div className="absolute inset-0 opacity-20 mix-blend-overlay">
-            <img 
-              className="w-full h-full object-cover" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbfgtX0pc8mbEzBsQlaThIqkGx9wND1Jn4XkhLoQ7niMTZQT_QtakKFxneI_xwgH1grCP7kfPVh1L-XwqVlvJNjgG1PCwsoDgypUyBjhexXS99jZxv6WpBCqaYZk_Qcv_RK3JE1h94ZchJuQvQP7KfQfEjuKx3c-n1btjxm6mQomTys-avFiyQS60ri2Uyhk37OeLxR6HI2t2T5sZ4PYa6BpbmxiE122t6B31KaHkxPfMxMKXLM1lMkJIbO-wqGhFkHPNZWSBzJCV2" 
+            <img
+              className="w-full h-full object-cover"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbfgtX0pc8mbEzBsQlaThIqkGx9wND1Jn4XkhLoQ7niMTZQT_QtakKFxneI_xwgH1grCP7kfPVh1L-XwqVlvJNjgG1PCwsoDgypUyBjhexXS99jZxv6WpBCqaYZk_Qcv_RK3JE1h94ZchJuQvQP7KfQfEjuKx3c-n1btjxm6mQomTys-avFiyQS60ri2Uyhk37OeLxR6HI2t2T5sZ4PYa6BpbmxiE122t6B31KaHkxPfMxMKXLM1lMkJIbO-wqGhFkHPNZWSBzJCV2"
               alt="Hyrox Arena"
               referrerPolicy="no-referrer"
             />
@@ -70,7 +185,10 @@ export const ActivityPage = () => {
               </div>
             </div>
           </div>
-          <button className="relative z-10 w-full bg-primary text-on-primary font-bold py-4 rounded-xl active:scale-95 transition-transform shadow-lg shadow-primary/20">
+          <button
+            onClick={() => setPlanOpen(true)}
+            className="relative z-10 w-full bg-primary text-on-primary font-bold py-4 rounded-xl active:scale-95 transition-transform shadow-lg shadow-primary/20"
+          >
             VIEW TRAINING PLAN
           </button>
         </section>
@@ -79,60 +197,39 @@ export const ActivityPage = () => {
         <section className="md:col-span-8 bg-surface-container rounded-xl p-8 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <h3 className="font-headline text-2xl font-bold tracking-tight">Recent Activity Log</h3>
-            <button className="text-primary font-bold text-sm uppercase tracking-widest flex items-center gap-2 hover:bg-primary/10 px-4 py-2 rounded-lg transition-colors">
+            <button
+              onClick={() => setLogOpen(true)}
+              className="text-primary font-bold text-sm uppercase tracking-widest flex items-center gap-2 hover:bg-primary/10 px-4 py-2 rounded-lg transition-colors"
+            >
               <Plus size={18} />
               Log Session
             </button>
           </div>
           <div className="space-y-4">
-            {/* Activity Entry: Badminton */}
-            <div className="flex items-center justify-between p-4 rounded-xl hover:bg-surface-bright/40 transition-colors group cursor-pointer">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-secondary-container/30 flex items-center justify-center text-secondary">
-                  <Activity size={24} />
+            {activities.map((act, idx) => {
+              const Icon = act.icon;
+              return (
+                <div
+                  key={idx}
+                  onClick={() => setDetailModal(act)}
+                  className="flex items-center justify-between p-4 rounded-xl hover:bg-surface-bright/40 transition-colors group cursor-pointer"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", act.iconClass)}>
+                      <Icon size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-headline font-bold text-lg">{act.name}</h4>
+                      <p className="text-sm text-on-surface-variant">{act.desc}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-headline font-bold text-primary">{act.duration}</div>
+                    <div className="text-xs text-outline font-bold uppercase tracking-tighter">{act.date}</div>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-headline font-bold text-lg">Badminton Students</h4>
-                  <p className="text-sm text-on-surface-variant">Intensive coaching session • High intensity</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="font-headline font-bold text-primary">120 MIN</div>
-                <div className="text-xs text-outline font-bold uppercase tracking-tighter">Oct 12, 2024</div>
-              </div>
-            </div>
-            {/* Activity Entry: Gym */}
-            <div className="flex items-center justify-between p-4 rounded-xl hover:bg-surface-bright/40 transition-colors group cursor-pointer">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-tertiary-container/30 flex items-center justify-center text-tertiary">
-                  <Dumbbell size={24} />
-                </div>
-                <div>
-                  <h4 className="font-headline font-bold text-lg">Morning Strength</h4>
-                  <p className="text-sm text-on-surface-variant">Deadlifts and overhead press focus</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="font-headline font-bold text-primary">75 MIN</div>
-                <div className="text-xs text-outline font-bold uppercase tracking-tighter">Oct 11, 2024</div>
-              </div>
-            </div>
-            {/* Activity Entry: Jogging */}
-            <div className="flex items-center justify-between p-4 rounded-xl hover:bg-surface-bright/40 transition-colors group cursor-pointer">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary-container/30 flex items-center justify-center text-primary">
-                  <Zap size={24} />
-                </div>
-                <div>
-                  <h4 className="font-headline font-bold text-lg">Hyrox Prep Run</h4>
-                  <p className="text-sm text-on-surface-variant">5km Interval sprints • HR Zone 4</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="font-headline font-bold text-primary">45 MIN</div>
-                <div className="text-xs text-outline font-bold uppercase tracking-tighter">Oct 10, 2024</div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </section>
       </div>
@@ -162,9 +259,9 @@ export const ActivityPage = () => {
             <p className="text-on-surface-variant text-sm max-w-md">Your highest activity volume occurs between 10 PM and 1 AM. Training during these "Nocturnal Architect" hours shows a 12% better recovery rate.</p>
           </div>
           <div className="hidden lg:block w-48 h-32 opacity-30">
-            <img 
-              className="w-full h-full object-contain" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmtyBBC50Hdtqb0zByQA6UEtVqXN0V9mGU900VF7HviLUqYjX70kvvN7LnEg_h6uusuuDSs74JO0vThDcM3f9oWNee2inMmcuXFs_akQpMKb7hXb4msjY1fVSaUHJP35Ss1D88VT_C6Ezvj0Lt9Xg92r-BGm84ygIGtzgClBqnZzJ5BWWO3Wzo4Cp9yCsL4lbm-cn7idkfkU7aN67_QHtez2fYufMpY8-ibZNYOsYy1PXtxFFf5YfvjW2eBBaKcR8SK3E_NxxSmeq1" 
+            <img
+              className="w-full h-full object-contain"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmtyBBC50Hdtqb0zByQA6UEtVqXN0V9mGU900VF7HviLUqYjX70kvvN7LnEg_h6uusuuDSs74JO0vThDcM3f9oWNee2inMmcuXFs_akQpMKb7hXb4msjY1fVSaUHJP35Ss1D88VT_C6Ezvj0Lt9Xg92r-BGm84ygIGtzgClBqnZzJ5BWWO3Wzo4Cp9yCsL4lbm-cn7idkfkU7aN67_QHtez2fYufMpY8-ibZNYOsYy1PXtxFFf5YfvjW2eBBaKcR8SK3E_NxxSmeq1"
               alt="Data Viz"
               referrerPolicy="no-referrer"
             />
@@ -172,7 +269,10 @@ export const ActivityPage = () => {
         </div>
       </div>
 
-      <div className="fixed right-6 bottom-24 md:bottom-12 w-14 h-14 bg-primary text-on-primary rounded-2xl shadow-2xl flex items-center justify-center z-40 active:scale-95 transition-transform">
+      <div
+        onClick={() => setLogOpen(true)}
+        className="fixed right-6 bottom-24 md:bottom-12 w-14 h-14 bg-primary text-on-primary rounded-2xl shadow-2xl flex items-center justify-center z-40 active:scale-95 transition-transform cursor-pointer"
+      >
         <Plus size={28} />
       </div>
     </motion.div>
