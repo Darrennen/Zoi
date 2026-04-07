@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Zap, Moon, ArrowRight, ArrowLeft, Filter, Search, Plus } from 'lucide-react';
+import { Target, Zap, Moon, ArrowRight, ArrowLeft, Filter, Search, Plus, TrendingUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
+import { cn } from '@/src/lib/utils';
 
 export const ActivityPage = () => {
   return (

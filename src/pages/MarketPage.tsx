@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrendingUp, Bitcoin, Coins, Lightbulb, AlertTriangle, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
+import { cn } from '@/src/lib/utils';
 
 export const MarketPage = () => {
   return (
