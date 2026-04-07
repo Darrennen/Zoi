@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef } from 'lucide-react';
+import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef, X } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import { Modal } from '../components/Modal';
@@ -54,6 +55,24 @@ export const ActivityPage = () => {
     const grams = Math.round(kg * ACTIVITY_MULTIPLIERS[activityLevel] * GOAL_MULTIPLIERS[goal]);
     return { grams, perMeal: Math.round(grams / 3), perMeal4: Math.round(grams / 4) };
   }, [weight, unit, activityLevel, goal]);
+
+  // Daily intake log
+  const [intakeLog, setIntakeLog] = useState<{ id: number; food: string; grams: number }[]>([]);
+  const [intakeFood, setIntakeFood] = useState('');
+  const [intakeGrams, setIntakeGrams] = useState('');
+
+  const totalConsumed = intakeLog.reduce((sum, item) => sum + item.grams, 0);
+  const progressPct = proteinResult ? Math.min(100, Math.round((totalConsumed / proteinResult.grams) * 100)) : 0;
+
+  const addIntake = () => {
+    const g = parseFloat(intakeGrams);
+    if (!intakeFood.trim() || !g || g <= 0) return;
+    setIntakeLog(prev => [...prev, { id: Date.now(), food: intakeFood.trim(), grams: g }]);
+    setIntakeFood('');
+    setIntakeGrams('');
+  };
+
+  const removeIntake = (id: number) => setIntakeLog(prev => prev.filter(i => i.id !== id));
 
   const handleLogSubmit = () => {
     toast('Session logged successfully!');
@@ -416,6 +435,109 @@ export const ActivityPage = () => {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Daily Protein Intake Tracker */}
+      <div className="mt-6 bg-surface-container rounded-xl p-8 shadow-xl">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center">
+              <Beef size={20} className="text-secondary" />
+            </div>
+            <div>
+              <h3 className="font-headline font-bold text-xl">Today's Protein Intake</h3>
+              <p className="text-on-surface-variant text-xs">Log what you've eaten</p>
+            </div>
+          </div>
+          {intakeLog.length > 0 && (
+            <button onClick={() => setIntakeLog([])} className="text-xs font-bold text-on-surface-variant hover:text-error transition-colors uppercase tracking-widest">
+              Clear All
+            </button>
+          )}
+        </div>
+
+        {/* Progress bar */}
+        <div className="mb-8">
+          <div className="flex items-end justify-between mb-2">
+            <span className="font-headline font-black text-4xl text-on-surface">
+              {totalConsumed}g
+              <span className="text-base font-normal text-on-surface-variant ml-2">consumed</span>
+            </span>
+            <span className="text-sm font-bold text-on-surface-variant">
+              {proteinResult ? `${proteinResult.grams}g target` : 'Set target above'}
+            </span>
+          </div>
+          <div className="w-full h-3 bg-surface-container-low rounded-full overflow-hidden">
+            <motion.div
+              className={cn("h-full rounded-full transition-colors", progressPct >= 100 ? 'bg-tertiary' : 'bg-secondary')}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ type: 'spring', stiffness: 80, damping: 20 }}
+            />
+          </div>
+          {proteinResult && (
+            <div className="flex justify-between mt-1">
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{progressPct}% of daily goal</span>
+              {proteinResult.grams - totalConsumed > 0
+                ? <span className="text-[10px] font-bold text-secondary">{proteinResult.grams - totalConsumed}g remaining</span>
+                : <span className="text-[10px] font-bold text-tertiary">Goal reached!</span>
+              }
+            </div>
+          )}
+        </div>
+
+        {/* Add food row */}
+        <div className="flex gap-3 mb-6">
+          <input
+            type="text"
+            placeholder="Food / meal name"
+            value={intakeFood}
+            onChange={e => setIntakeFood(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addIntake()}
+            className="flex-1 bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-secondary transition-all"
+          />
+          <input
+            type="number"
+            placeholder="Protein (g)"
+            value={intakeGrams}
+            onChange={e => setIntakeGrams(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addIntake()}
+            className="w-36 bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-secondary transition-all"
+          />
+          <button
+            onClick={addIntake}
+            className="px-5 bg-secondary text-on-primary rounded-xl font-bold hover:bg-secondary/80 active:scale-95 transition-all flex items-center gap-2"
+          >
+            <Plus size={18} /> Add
+          </button>
+        </div>
+
+        {/* Log list */}
+        <div className="space-y-2">
+          <AnimatePresence>
+            {intakeLog.length === 0 ? (
+              <div className="py-8 text-center text-on-surface-variant text-sm">
+                No entries yet — add your first meal above
+              </div>
+            ) : (
+              intakeLog.map(item => (
+                <motion.div key={item.id}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="flex items-center justify-between bg-surface-container-low px-5 py-3 rounded-xl group"
+                >
+                  <span className="font-medium text-on-surface">{item.food}</span>
+                  <div className="flex items-center gap-4">
+                    <span className="font-headline font-black text-secondary text-lg">{item.grams}g</span>
+                    <button onClick={() => removeIntake(item.id)} className="text-on-surface-variant hover:text-error transition-colors opacity-0 group-hover:opacity-100">
+                      <X size={16} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
