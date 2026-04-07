@@ -1,9 +1,30 @@
-import React, { useState } from 'react';
-import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
+
+const ACTIVITY_MULTIPLIERS: Record<string, number> = {
+  Sedentary: 0.8,
+  Moderate: 1.3,
+  Active: 1.7,
+  Athlete: 2.1,
+};
+
+const GOAL_MULTIPLIERS: Record<string, number> = {
+  'Fat Loss': 1.1,
+  Maintenance: 1.0,
+  'Muscle Gain': 1.25,
+};
+
+const FOOD_SOURCES = [
+  { name: 'Chicken Breast', per100g: 31 },
+  { name: 'Greek Yogurt', per100g: 10 },
+  { name: 'Eggs (1 large)', per100g: 13 },
+  { name: 'Tuna (canned)', per100g: 26 },
+  { name: 'Whey Protein', per100g: 80 },
+];
 
 export const ActivityPage = () => {
   const { toast } = useToast();
@@ -19,6 +40,20 @@ export const ActivityPage = () => {
 
   // Activity detail modal
   const [detailModal, setDetailModal] = useState<null | { name: string; desc: string; duration: string; date: string }>(null);
+
+  // Protein calculator
+  const [weight, setWeight] = useState('');
+  const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
+  const [activityLevel, setActivityLevel] = useState('Active');
+  const [goal, setGoal] = useState('Muscle Gain');
+
+  const proteinResult = useMemo(() => {
+    const w = parseFloat(weight);
+    if (!w || w <= 0) return null;
+    const kg = unit === 'lbs' ? w / 2.205 : w;
+    const grams = Math.round(kg * ACTIVITY_MULTIPLIERS[activityLevel] * GOAL_MULTIPLIERS[goal]);
+    return { grams, perMeal: Math.round(grams / 3), perMeal4: Math.round(grams / 4) };
+  }, [weight, unit, activityLevel, goal]);
 
   const handleLogSubmit = () => {
     toast('Session logged successfully!');
@@ -265,6 +300,121 @@ export const ActivityPage = () => {
               alt="Data Viz"
               referrerPolicy="no-referrer"
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Protein Calculator */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Inputs */}
+        <div className="lg:col-span-5 bg-surface-container rounded-xl p-8 shadow-xl">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-tertiary/10 flex items-center justify-center">
+              <Beef size={20} className="text-tertiary" />
+            </div>
+            <div>
+              <h3 className="font-headline font-bold text-xl">Protein Calculator</h3>
+              <p className="text-on-surface-variant text-xs">Daily intake target</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {/* Weight + unit toggle */}
+            <div className="space-y-2">
+              <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Body Weight</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder={unit === 'kg' ? 'e.g. 75' : 'e.g. 165'}
+                  value={weight}
+                  onChange={e => setWeight(e.target.value)}
+                  className="flex-1 bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-primary transition-all"
+                />
+                <div className="flex bg-surface-container-lowest rounded-xl overflow-hidden">
+                  {(['kg', 'lbs'] as const).map(u => (
+                    <button key={u} onClick={() => setUnit(u)}
+                      className={cn("px-4 font-bold text-sm transition-colors", unit === u ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface')}>
+                      {u}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Activity level */}
+            <div className="space-y-2">
+              <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Activity Level</label>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.keys(ACTIVITY_MULTIPLIERS).map(level => (
+                  <button key={level} onClick={() => setActivityLevel(level)}
+                    className={cn("py-3 rounded-xl text-sm font-bold transition-colors", activityLevel === level ? 'bg-primary text-on-primary' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-bright')}>
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Goal */}
+            <div className="space-y-2">
+              <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Goal</label>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.keys(GOAL_MULTIPLIERS).map(g => (
+                  <button key={g} onClick={() => setGoal(g)}
+                    className={cn("py-3 rounded-xl text-xs font-bold transition-colors", goal === g ? 'bg-secondary text-on-primary' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-bright')}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Result */}
+        <div className="lg:col-span-7 grid grid-rows-2 gap-6">
+          {/* Main result */}
+          <div className={cn("rounded-xl p-8 flex items-center justify-between transition-all", proteinResult ? 'bg-gradient-to-br from-tertiary/20 to-surface-container border border-tertiary/20' : 'bg-surface-container-low border border-outline-variant/5')}>
+            {proteinResult ? (
+              <>
+                <div>
+                  <span className="font-label text-[10px] uppercase tracking-widest text-tertiary font-bold block mb-2">Daily Target</span>
+                  <div className="font-headline font-black text-7xl text-on-surface">{proteinResult.grams}<span className="text-2xl font-normal text-on-surface-variant ml-2">g</span></div>
+                  <p className="text-on-surface-variant text-sm mt-2">{activityLevel} · {goal}</p>
+                </div>
+                <div className="space-y-4 text-right">
+                  <div className="bg-surface-container-high px-5 py-3 rounded-xl">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">Per Meal (3x)</span>
+                    <span className="font-headline font-black text-2xl text-primary">{proteinResult.perMeal}g</span>
+                  </div>
+                  <div className="bg-surface-container-high px-5 py-3 rounded-xl">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">Per Meal (4x)</span>
+                    <span className="font-headline font-black text-2xl text-secondary">{proteinResult.perMeal4}g</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="w-full flex flex-col items-center justify-center gap-3 py-4 text-center">
+                <Beef size={36} className="text-on-surface-variant/30" />
+                <p className="text-on-surface-variant font-medium">Enter your weight to calculate your daily protein target</p>
+              </div>
+            )}
+          </div>
+
+          {/* Food sources */}
+          <div className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/5">
+            <span className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-4">Protein Sources (per 100g)</span>
+            <div className="flex flex-wrap gap-3">
+              {FOOD_SOURCES.map(food => (
+                <div key={food.name} className="bg-surface-container px-4 py-2 rounded-lg flex items-center gap-2">
+                  <span className="text-sm font-medium">{food.name}</span>
+                  <span className="text-xs font-black text-tertiary">{food.per100g}g</span>
+                  {proteinResult && (
+                    <span className="text-[10px] text-on-surface-variant">
+                      (~{Math.round(proteinResult.grams / (food.per100g / 100))}g needed)
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
