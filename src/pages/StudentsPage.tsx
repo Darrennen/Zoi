@@ -27,6 +27,48 @@ interface Session {
   notes: string;
 }
 
+const inputClass = "w-full bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-primary transition-all";
+const labelClass = "font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant";
+
+const StudentForm = ({ form, onChange }: { form: Omit<Student, 'id'>; onChange: (f: Omit<Student, 'id'>) => void }) => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2 col-span-2">
+        <label className={labelClass}>Name</label>
+        <input className={inputClass} type="text" placeholder="Student name" value={form.name} onChange={e => onChange({ ...form, name: e.target.value })} />
+      </div>
+      <div className="space-y-2">
+        <label className={labelClass}>Age</label>
+        <input className={inputClass} type="number" placeholder="Age" value={form.age} onChange={e => onChange({ ...form, age: e.target.value })} />
+      </div>
+      <div className="space-y-2">
+        <label className={labelClass}>Level</label>
+        <select className={inputClass} value={form.level} onChange={e => onChange({ ...form, level: e.target.value as Student['level'] })}>
+          <option>Beginner</option>
+          <option>Intermediate</option>
+          <option>Advanced</option>
+        </select>
+      </div>
+      <div className="space-y-2">
+        <label className={labelClass}>Strengths</label>
+        <input className={inputClass} type="text" placeholder="e.g. Net Accuracy" value={form.strengths} onChange={e => onChange({ ...form, strengths: e.target.value })} />
+      </div>
+      <div className="space-y-2">
+        <label className={labelClass}>Weaknesses</label>
+        <input className={inputClass} type="text" placeholder="e.g. Footwork" value={form.weaknesses} onChange={e => onChange({ ...form, weaknesses: e.target.value })} />
+      </div>
+      <div className="space-y-2 col-span-2">
+        <label className={labelClass}>Training Focus</label>
+        <input className={inputClass} type="text" placeholder="e.g. Smash Power" value={form.trainingFocus} onChange={e => onChange({ ...form, trainingFocus: e.target.value })} />
+      </div>
+      <div className="space-y-2 col-span-2">
+        <label className={labelClass}>Description</label>
+        <textarea className={cn(inputClass, "resize-none")} rows={2} placeholder="Notes about this student..." value={form.description} onChange={e => onChange({ ...form, description: e.target.value })} />
+      </div>
+    </div>
+  </div>
+);
+
 const LEVEL_COLORS: Record<Student['level'], string> = {
   Beginner: 'bg-primary/10 text-primary',
   Intermediate: 'bg-primary/10 text-primary',
@@ -132,48 +174,6 @@ export const StudentsPage = () => {
     setDeleteTarget(null);
     toast(`${deleteTarget.name} removed from roster`);
   };
-
-  const inputClass = "w-full bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-primary transition-all";
-  const labelClass = "font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant";
-
-  const StudentForm = ({ form, onChange }: { form: Omit<Student, 'id'>; onChange: (f: Omit<Student, 'id'>) => void }) => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2 col-span-2">
-          <label className={labelClass}>Name</label>
-          <input className={inputClass} type="text" placeholder="Student name" value={form.name} onChange={e => onChange({ ...form, name: e.target.value })} />
-        </div>
-        <div className="space-y-2">
-          <label className={labelClass}>Age</label>
-          <input className={inputClass} type="number" placeholder="Age" value={form.age} onChange={e => onChange({ ...form, age: e.target.value })} />
-        </div>
-        <div className="space-y-2">
-          <label className={labelClass}>Level</label>
-          <select className={inputClass} value={form.level} onChange={e => onChange({ ...form, level: e.target.value as Student['level'] })}>
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
-          </select>
-        </div>
-        <div className="space-y-2">
-          <label className={labelClass}>Strengths</label>
-          <input className={inputClass} type="text" placeholder="e.g. Net Accuracy" value={form.strengths} onChange={e => onChange({ ...form, strengths: e.target.value })} />
-        </div>
-        <div className="space-y-2">
-          <label className={labelClass}>Weaknesses</label>
-          <input className={inputClass} type="text" placeholder="e.g. Footwork" value={form.weaknesses} onChange={e => onChange({ ...form, weaknesses: e.target.value })} />
-        </div>
-        <div className="space-y-2 col-span-2">
-          <label className={labelClass}>Training Focus</label>
-          <input className={inputClass} type="text" placeholder="e.g. Smash Power" value={form.trainingFocus} onChange={e => onChange({ ...form, trainingFocus: e.target.value })} />
-        </div>
-        <div className="space-y-2 col-span-2">
-          <label className={labelClass}>Description</label>
-          <textarea className={cn(inputClass, "resize-none")} rows={2} placeholder="Notes about this student..." value={form.description} onChange={e => onChange({ ...form, description: e.target.value })} />
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
