@@ -35,30 +35,32 @@ interface NavItemProps {
 }
 
 const NavItem = ({ to, icon: Icon, label }: NavItemProps) => (
-  <NavLink
-    to={to}
-    className={({ isActive }) => cn(
-      "flex flex-col items-center justify-center p-2 transition-all duration-200",
-      isActive ? "bg-primary text-on-primary rounded-xl px-3 py-1.5 active:scale-90" : "text-on-surface-variant hover:text-white"
+  <NavLink to={to}>
+    {({ isActive }) => (
+      <span className={cn(
+        "flex flex-col items-center justify-center p-2 transition-all duration-200",
+        isActive ? "bg-primary text-on-primary rounded-xl px-3 py-1.5 active:scale-90" : "text-on-surface-variant hover:text-white"
+      )}>
+        <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+        <span className="font-label text-[10px] uppercase tracking-widest font-bold mt-1">{label}</span>
+      </span>
     )}
-  >
-    <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-    <span className="font-label text-[10px] uppercase tracking-widest font-bold mt-1">{label}</span>
   </NavLink>
 );
 
 const SidebarItem = ({ to, icon: Icon, label }: NavItemProps) => (
-  <NavLink
-    to={to}
-    className={({ isActive }) => cn(
-      "mx-2 rounded-lg flex items-center gap-4 px-6 py-4 cursor-pointer transition-all duration-300 hover:translate-x-1",
-      isActive 
-        ? "bg-gradient-to-r from-primary to-primary-container text-on-primary shadow-lg shadow-primary/20" 
-        : "text-on-surface-variant hover:bg-surface-container"
+  <NavLink to={to}>
+    {({ isActive }) => (
+      <span className={cn(
+        "mx-2 rounded-lg flex items-center gap-4 px-6 py-4 cursor-pointer transition-all duration-300 hover:translate-x-1",
+        isActive
+          ? "bg-gradient-to-r from-primary to-primary-container text-on-primary shadow-lg shadow-primary/20"
+          : "text-on-surface-variant hover:bg-surface-container"
+      )}>
+        <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+        <span className="font-headline text-lg font-bold">{label}</span>
+      </span>
     )}
-  >
-    <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-    <span className="font-headline text-lg font-bold">{label}</span>
   </NavLink>
 );
 
