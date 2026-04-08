@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef, X, Flame, Share2, Monitor, MonitorOff } from 'lucide-react';
+import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef, X, Flame, Share2, Monitor, MonitorOff, Moon, Star } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -31,6 +31,8 @@ const CALORIE_GOALS: Record<string, { label: string; delta: number; color: strin
   Maintenance: { label: 'Maintain', delta: 0, color: 'text-primary' },
   'Muscle Gain': { label: 'Build Muscle', delta: 300, color: 'text-tertiary' },
 };
+
+interface SleepEntry { id: number; date: string; bedtime: string; wakeTime: string; hours: number; quality: number; }
 
 const FOOD_SOURCES = [
   { name: 'Chicken Breast', per100g: 31 },
@@ -124,6 +126,39 @@ export const ActivityPage = () => {
   };
 
   const removeCalEntry = (id: number) => setCalLog(prev => prev.filter(i => i.id !== id));
+
+  // Sleep tracker
+  const [sleepLog, setSleepLog] = useState<SleepEntry[]>([]);
+  const [sleepBed, setSleepBed] = useState('');
+  const [sleepWake, setSleepWake] = useState('');
+  const [sleepQuality, setSleepQuality] = useState(0);
+
+  const calcSleepHours = (bed: string, wake: string): number => {
+    if (!bed || !wake) return 0;
+    const [bh, bm] = bed.split(':').map(Number);
+    const [wh, wm] = wake.split(':').map(Number);
+    let mins = (wh * 60 + wm) - (bh * 60 + bm);
+    if (mins <= 0) mins += 24 * 60;
+    return Math.round((mins / 60) * 10) / 10;
+  };
+
+  const sleepPreview = calcSleepHours(sleepBed, sleepWake);
+
+  const addSleepEntry = () => {
+    if (!sleepBed || !sleepWake || sleepQuality === 0) return;
+    const hours = calcSleepHours(sleepBed, sleepWake);
+    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    setSleepLog(prev => [{ id: Date.now(), date: today, bedtime: sleepBed, wakeTime: sleepWake, hours, quality: sleepQuality }, ...prev]);
+    setSleepBed('');
+    setSleepWake('');
+    setSleepQuality(0);
+  };
+
+  const removeSleepEntry = (id: number) => setSleepLog(prev => prev.filter(i => i.id !== id));
+
+  const last7 = sleepLog.slice(0, 7);
+  const weekAvg = last7.length ? Math.round((last7.reduce((s, e) => s + e.hours, 0) / last7.length) * 10) / 10 : 0;
+  const sleepDebt = last7.length ? Math.round((8 * last7.length - last7.reduce((s, e) => s + e.hours, 0)) * 10) / 10 : 0;
 
   // Wake Lock
   const [wakeLockActive, setWakeLockActive] = useState(false);
@@ -860,6 +895,131 @@ export const ActivityPage = () => {
               </AnimatePresence>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Sleep Tracker */}
+      <div className="mt-6 bg-surface-container rounded-xl p-5 md:p-8 shadow-xl">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Moon size={20} className="text-primary" />
+            </div>
+            <div>
+              <h3 className="font-headline font-bold text-xl">Sleep Tracker</h3>
+              <p className="text-on-surface-variant text-xs">Log nightly sleep & quality</p>
+            </div>
+          </div>
+          {sleepLog.length > 0 && (
+            <button onClick={() => setSleepLog([])} className="text-xs font-bold text-on-surface-variant hover:text-error transition-colors uppercase tracking-widest">
+              Clear All
+            </button>
+          )}
+        </div>
+
+        {/* Summary stats */}
+        {last7.length > 0 && (
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="bg-surface-container-low p-4 rounded-xl text-center">
+              <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Avg / night</span>
+              <span className={cn("font-headline font-black text-2xl", weekAvg >= 7 ? 'text-tertiary' : weekAvg >= 6 ? 'text-secondary' : 'text-error')}>{weekAvg}h</span>
+            </div>
+            <div className="bg-surface-container-low p-4 rounded-xl text-center">
+              <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Sleep Debt</span>
+              <span className={cn("font-headline font-black text-2xl", sleepDebt <= 0 ? 'text-tertiary' : sleepDebt <= 4 ? 'text-secondary' : 'text-error')}>{Math.max(0, sleepDebt)}h</span>
+            </div>
+            <div className="bg-surface-container-low p-4 rounded-xl text-center">
+              <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Nights logged</span>
+              <span className="font-headline font-black text-2xl text-primary">{last7.length}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Weekly bar chart */}
+        {last7.length > 0 && (
+          <div className="mb-6">
+            <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant font-bold block mb-3">Last {last7.length} nights</span>
+            <div className="flex items-end gap-2 h-20">
+              {[...last7].reverse().map((entry) => {
+                const pct = Math.min(100, (entry.hours / 10) * 100);
+                const color = entry.hours >= 7 ? 'bg-tertiary' : entry.hours >= 6 ? 'bg-secondary' : 'bg-error';
+                return (
+                  <div key={entry.id} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-[9px] text-on-surface-variant font-bold">{entry.hours}h</span>
+                    <div className="w-full bg-surface-container-low rounded-t-md overflow-hidden" style={{ height: '52px' }}>
+                      <div className={cn("w-full rounded-t-md transition-all", color)} style={{ height: `${pct}%`, marginTop: `${100 - pct}%` }} />
+                    </div>
+                    <span className="text-[9px] text-on-surface-variant truncate w-full text-center">{entry.date}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Log form */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="flex-1 flex flex-col gap-1">
+            <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Bedtime</label>
+            <input type="time" value={sleepBed} onChange={e => setSleepBed(e.target.value)}
+              className="bg-surface-container-lowest border-none rounded-xl text-on-surface p-3 focus:ring-2 focus:ring-primary transition-all" />
+          </div>
+          <div className="flex-1 flex flex-col gap-1">
+            <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">
+              Wake Time {sleepPreview > 0 && <span className="normal-case text-primary ml-1">= {sleepPreview}h</span>}
+            </label>
+            <input type="time" value={sleepWake} onChange={e => setSleepWake(e.target.value)}
+              className="bg-surface-container-lowest border-none rounded-xl text-on-surface p-3 focus:ring-2 focus:ring-primary transition-all" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Quality</label>
+            <div className="flex items-center gap-1 h-[50px]">
+              {[1, 2, 3, 4, 5].map(star => (
+                <button key={star} onClick={() => setSleepQuality(star)}
+                  className={cn("transition-colors", star <= sleepQuality ? 'text-secondary' : 'text-on-surface-variant/30 hover:text-on-surface-variant')}>
+                  <Star size={22} fill={star <= sleepQuality ? 'currentColor' : 'none'} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-end">
+            <button onClick={addSleepEntry}
+              disabled={!sleepBed || !sleepWake || sleepQuality === 0}
+              className="w-full sm:w-auto px-5 py-3 bg-primary text-on-primary rounded-xl font-bold hover:bg-primary/80 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-40 disabled:pointer-events-none">
+              <Plus size={18} /> Log
+            </button>
+          </div>
+        </div>
+
+        {/* Log list */}
+        <div className="space-y-2 max-h-56 overflow-y-auto no-scrollbar">
+          <AnimatePresence>
+            {sleepLog.length === 0 ? (
+              <p className="text-center text-on-surface-variant text-sm py-6">No sleep logged yet — add last night above</p>
+            ) : sleepLog.map(entry => (
+              <motion.div key={entry.id} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 20 }}
+                className="flex items-center justify-between bg-surface-container-low px-4 py-3 rounded-xl group">
+                <div className="flex items-center gap-3">
+                  <Moon size={16} className="text-primary shrink-0" />
+                  <div>
+                    <span className="font-medium text-on-surface text-sm">{entry.date}</span>
+                    <span className="text-on-surface-variant text-xs ml-2">{entry.bedtime} → {entry.wakeTime}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-0.5">
+                    {[1,2,3,4,5].map(s => (
+                      <Star key={s} size={12} className={s <= entry.quality ? 'text-secondary' : 'text-on-surface-variant/20'} fill={s <= entry.quality ? 'currentColor' : 'none'} />
+                    ))}
+                  </div>
+                  <span className={cn("font-headline font-black text-base", entry.hours >= 7 ? 'text-tertiary' : entry.hours >= 6 ? 'text-secondary' : 'text-error')}>{entry.hours}h</span>
+                  <button onClick={() => removeSleepEntry(entry.id)} className="text-on-surface-variant hover:text-error transition-colors opacity-0 group-hover:opacity-100">
+                    <X size={14} />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
 
