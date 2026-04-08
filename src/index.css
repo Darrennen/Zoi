@@ -61,3 +61,16 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Safe area support for iPhone notch / Dynamic Island */
+:root {
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+  --sar: env(safe-area-inset-right);
+}
+
+/* Prevent input zoom on iOS (inputs need font-size >= 16px) */
+input, select, textarea {
+  font-size: 16px !important;
+}

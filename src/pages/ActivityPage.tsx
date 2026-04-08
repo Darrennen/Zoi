@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef, X, Flame } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef, X, Flame, Share2, Monitor, MonitorOff } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -124,6 +124,41 @@ export const ActivityPage = () => {
   };
 
   const removeCalEntry = (id: number) => setCalLog(prev => prev.filter(i => i.id !== id));
+
+  // Wake Lock
+  const [wakeLockActive, setWakeLockActive] = useState(false);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  const toggleWakeLock = async () => {
+    if (wakeLockRef.current) {
+      await wakeLockRef.current.release();
+      wakeLockRef.current = null;
+      setWakeLockActive(false);
+    } else {
+      try {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        setWakeLockActive(true);
+        wakeLockRef.current.addEventListener('release', () => {
+          setWakeLockActive(false);
+          wakeLockRef.current = null;
+        });
+      } catch (e) {
+        toast('Wake lock not supported on this device', 'error');
+      }
+    }
+  };
+
+  // Share protein result
+  const shareProtein = async () => {
+    if (!proteinResult) return;
+    const text = `My daily protein target: ${proteinResult.grams}g (${activityLevel} · ${goal})\nPer meal (3x): ${proteinResult.perMeal}g\n— Darren's HQ`;
+    if (navigator.share) {
+      await navigator.share({ title: 'Protein Target', text });
+    } else {
+      await navigator.clipboard.writeText(text);
+      toast('Copied to clipboard!');
+    }
+  };
 
   const handleLogSubmit = () => {
     toast('Session logged successfully!');
@@ -302,13 +337,26 @@ export const ActivityPage = () => {
         <section className="md:col-span-8 bg-surface-container rounded-xl p-8 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <h3 className="font-headline text-2xl font-bold tracking-tight">Recent Activity Log</h3>
-            <button
-              onClick={() => setLogOpen(true)}
-              className="text-primary font-bold text-sm uppercase tracking-widest flex items-center gap-2 hover:bg-primary/10 px-4 py-2 rounded-lg transition-colors"
-            >
-              <Plus size={18} />
-              Log Session
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleWakeLock}
+                title={wakeLockActive ? 'Release screen wake lock' : 'Keep screen on'}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors min-h-[44px]",
+                  wakeLockActive ? 'bg-secondary/20 text-secondary' : 'text-on-surface-variant hover:bg-surface-bright/40'
+                )}
+              >
+                {wakeLockActive ? <Monitor size={16} /> : <MonitorOff size={16} />}
+                <span className="hidden sm:inline">Screen On</span>
+              </button>
+              <button
+                onClick={() => setLogOpen(true)}
+                className="text-primary font-bold text-sm uppercase tracking-widest flex items-center gap-2 hover:bg-primary/10 px-4 py-2 rounded-lg transition-colors min-h-[44px]"
+              >
+                <Plus size={18} />
+                Log Session
+              </button>
+            </div>
           </div>
           <div className="space-y-4">
             {activities.map((act, idx) => {
@@ -446,7 +494,16 @@ export const ActivityPage = () => {
             {proteinResult ? (
               <>
                 <div>
-                  <span className="font-label text-[10px] uppercase tracking-widest text-tertiary font-bold block mb-2">Daily Target</span>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="font-label text-[10px] uppercase tracking-widest text-tertiary font-bold">Daily Target</span>
+                    <button
+                      onClick={shareProtein}
+                      title="Share protein target"
+                      className="text-on-surface-variant hover:text-tertiary transition-colors p-1 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    >
+                      <Share2 size={16} />
+                    </button>
+                  </div>
                   <div className="font-headline font-black text-7xl text-on-surface">{proteinResult.grams}<span className="text-2xl font-normal text-on-surface-variant ml-2">g</span></div>
                   <p className="text-on-surface-variant text-sm mt-2">{activityLevel} · {goal}</p>
                 </div>

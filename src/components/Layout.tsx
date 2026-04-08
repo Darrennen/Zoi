@@ -55,7 +55,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-background text-on-background selection:bg-primary/30">
       {/* Top Bar */}
-      <header className="fixed top-0 w-full z-50 bg-background/60 backdrop-blur-xl flex items-center justify-between px-6 py-8 shadow-[0_20px_40px_rgba(6,14,32,0.4)]">
+      <header className="fixed top-0 w-full z-50 bg-background/60 backdrop-blur-xl flex items-center justify-between px-6 py-8 shadow-[0_20px_40px_rgba(6,14,32,0.4)]" style={{ paddingTop: 'calc(2rem + env(safe-area-inset-top))' }}>
         <div className="flex items-center gap-4">
           <button
             onClick={() => setSidebarOpen(prev => !prev)}
@@ -96,7 +96,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
       <aside className={cn(
         "fixed inset-y-0 left-0 z-[60] flex flex-col py-8 h-full w-80 bg-background rounded-r-3xl shadow-2xl shadow-black transition-transform duration-300",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      )} style={{ paddingTop: 'calc(2rem + env(safe-area-inset-top))' }}>
         <div className="px-8 mb-12">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-12 h-12 rounded-xl bg-primary-container p-0.5 flex items-center justify-center">
@@ -127,12 +127,12 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="pt-32 pb-32 lg:pb-12 px-6 md:px-12 max-w-7xl mx-auto">
+      <main className="pb-32 lg:pb-12 px-6 md:px-12 max-w-7xl mx-auto" style={{ paddingTop: 'calc(8rem + env(safe-area-inset-top))' }}>
         {children}
       </main>
 
       {/* Bottom Nav (Mobile) */}
-      <nav className="lg:hidden fixed bottom-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-surface-container/80 backdrop-blur-md rounded-t-2xl z-50 shadow-[0_-10px_30px_rgba(6,14,32,0.3)]">
+      <nav className="lg:hidden fixed bottom-0 w-full flex justify-around items-center px-4 pt-3 bg-surface-container/80 backdrop-blur-md rounded-t-2xl z-50 shadow-[0_-10px_30px_rgba(6,14,32,0.3)]" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
         <NavItem to="/" icon={Users} label="Students" />
         <NavItem to="/activity" icon={Heart} label="Life" />
         <NavItem to="/market" icon={TrendingUp} label="Growth" />
