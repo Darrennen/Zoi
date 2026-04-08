@@ -425,7 +425,7 @@ export const ActivityPage = () => {
       {/* Protein Calculator */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Inputs */}
-        <div className="lg:col-span-5 bg-surface-container rounded-xl p-8 shadow-xl">
+        <div className="lg:col-span-5 bg-surface-container rounded-xl p-5 md:p-8 shadow-xl">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-tertiary/10 flex items-center justify-center">
               <Beef size={20} className="text-tertiary" />
@@ -488,33 +488,35 @@ export const ActivityPage = () => {
         </div>
 
         {/* Result */}
-        <div className="lg:col-span-7 grid grid-rows-2 gap-6">
+        <div className="lg:col-span-7 flex flex-col gap-6">
           {/* Main result */}
-          <div className={cn("rounded-xl p-8 flex items-center justify-between transition-all", proteinResult ? 'bg-gradient-to-br from-tertiary/20 to-surface-container border border-tertiary/20' : 'bg-surface-container-low border border-outline-variant/5')}>
+          <div className={cn("rounded-xl p-5 md:p-8 flex flex-col gap-4 transition-all", proteinResult ? 'bg-gradient-to-br from-tertiary/20 to-surface-container border border-tertiary/20' : 'bg-surface-container-low border border-outline-variant/5')}>
             {proteinResult ? (
               <>
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="font-label text-[10px] uppercase tracking-widest text-tertiary font-bold">Daily Target</span>
-                    <button
-                      onClick={shareProtein}
-                      title="Share protein target"
-                      className="text-on-surface-variant hover:text-tertiary transition-colors p-1 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center"
-                    >
-                      <Share2 size={16} />
-                    </button>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-label text-[10px] uppercase tracking-widest text-tertiary font-bold">Daily Target</span>
+                      <button
+                        onClick={shareProtein}
+                        title="Share protein target"
+                        className="text-on-surface-variant hover:text-tertiary transition-colors p-1 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      >
+                        <Share2 size={16} />
+                      </button>
+                    </div>
+                    <div className="font-headline font-black text-5xl sm:text-7xl text-on-surface">{proteinResult.grams}<span className="text-xl sm:text-2xl font-normal text-on-surface-variant ml-2">g</span></div>
+                    <p className="text-on-surface-variant text-sm mt-2">{activityLevel} · {goal}</p>
                   </div>
-                  <div className="font-headline font-black text-7xl text-on-surface">{proteinResult.grams}<span className="text-2xl font-normal text-on-surface-variant ml-2">g</span></div>
-                  <p className="text-on-surface-variant text-sm mt-2">{activityLevel} · {goal}</p>
-                </div>
-                <div className="space-y-4 text-right">
-                  <div className="bg-surface-container-high px-5 py-3 rounded-xl">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">Per Meal (3x)</span>
-                    <span className="font-headline font-black text-2xl text-primary">{proteinResult.perMeal}g</span>
-                  </div>
-                  <div className="bg-surface-container-high px-5 py-3 rounded-xl">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">Per Meal (4x)</span>
-                    <span className="font-headline font-black text-2xl text-secondary">{proteinResult.perMeal4}g</span>
+                  <div className="flex flex-col gap-2 text-right shrink-0">
+                    <div className="bg-surface-container-high px-4 py-2.5 rounded-xl">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">Per Meal (3x)</span>
+                      <span className="font-headline font-black text-xl sm:text-2xl text-primary">{proteinResult.perMeal}g</span>
+                    </div>
+                    <div className="bg-surface-container-high px-4 py-2.5 rounded-xl">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">Per Meal (4x)</span>
+                      <span className="font-headline font-black text-xl sm:text-2xl text-secondary">{proteinResult.perMeal4}g</span>
+                    </div>
                   </div>
                 </div>
               </>
@@ -535,7 +537,7 @@ export const ActivityPage = () => {
                   <span className="text-sm font-medium">{food.name}</span>
                   <span className="text-xs font-black text-tertiary">{food.per100g}g</span>
                   {proteinResult && (
-                    <span className="text-[10px] text-on-surface-variant">
+                    <span className="hidden sm:inline text-[10px] text-on-surface-variant">
                       (~{Math.round(proteinResult.grams / (food.per100g / 100))}g needed)
                     </span>
                   )}
@@ -547,7 +549,7 @@ export const ActivityPage = () => {
       </div>
 
       {/* Daily Protein Intake Tracker */}
-      <div className="mt-6 bg-surface-container rounded-xl p-8 shadow-xl">
+      <div className="mt-6 bg-surface-container rounded-xl p-5 md:p-8 shadow-xl">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center">
@@ -595,7 +597,7 @@ export const ActivityPage = () => {
         </div>
 
         {/* Add food row */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <input
             type="text"
             placeholder="Food / meal name"
@@ -604,20 +606,22 @@ export const ActivityPage = () => {
             onKeyDown={e => e.key === 'Enter' && addIntake()}
             className="flex-1 bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-secondary transition-all"
           />
-          <input
-            type="number"
-            placeholder="Protein (g)"
-            value={intakeGrams}
-            onChange={e => setIntakeGrams(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addIntake()}
-            className="w-36 bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-secondary transition-all"
-          />
-          <button
-            onClick={addIntake}
-            className="px-5 bg-secondary text-on-primary rounded-xl font-bold hover:bg-secondary/80 active:scale-95 transition-all flex items-center gap-2"
-          >
-            <Plus size={18} /> Add
-          </button>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              placeholder="Protein (g)"
+              value={intakeGrams}
+              onChange={e => setIntakeGrams(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addIntake()}
+              className="flex-1 sm:w-32 bg-surface-container-lowest border-none rounded-xl text-on-surface p-4 focus:ring-2 focus:ring-secondary transition-all"
+            />
+            <button
+              onClick={addIntake}
+              className="px-5 bg-secondary text-on-primary rounded-xl font-bold hover:bg-secondary/80 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap"
+            >
+              <Plus size={18} /> Add
+            </button>
+          </div>
         </div>
 
         {/* Log list */}
@@ -652,7 +656,7 @@ export const ActivityPage = () => {
       {/* Calorie Calculator */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Inputs */}
-        <div className="lg:col-span-5 bg-surface-container rounded-xl p-8 shadow-xl">
+        <div className="lg:col-span-5 bg-surface-container rounded-xl p-5 md:p-8 shadow-xl">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center">
               <Flame size={20} className="text-error" />
@@ -739,23 +743,23 @@ export const ActivityPage = () => {
         {/* Results */}
         <div className="lg:col-span-7 space-y-6">
           {/* TDEE breakdown */}
-          <div className={cn("rounded-xl p-8 transition-all", calorieResult ? 'bg-gradient-to-br from-error/10 to-surface-container border border-error/20' : 'bg-surface-container-low border border-outline-variant/5')}>
+          <div className={cn("rounded-xl p-5 md:p-8 transition-all", calorieResult ? 'bg-gradient-to-br from-error/10 to-surface-container border border-error/20' : 'bg-surface-container-low border border-outline-variant/5')}>
             {calorieResult ? (
               <div className="space-y-6">
-                <div className="flex items-end justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                   <div>
                     <span className="font-label text-[10px] uppercase tracking-widest text-error font-bold block mb-2">Daily Target</span>
-                    <div className="font-headline font-black text-7xl text-on-surface">{calorieResult.target.toLocaleString()}<span className="text-2xl font-normal text-on-surface-variant ml-2">kcal</span></div>
+                    <div className="font-headline font-black text-5xl sm:text-7xl text-on-surface">{calorieResult.target.toLocaleString()}<span className="text-xl sm:text-2xl font-normal text-on-surface-variant ml-2">kcal</span></div>
                     <p className="text-on-surface-variant text-sm mt-1">{CALORIE_GOALS[calGoal].label} · {activityLevel}</p>
                   </div>
-                  <div className="text-right space-y-2">
-                    <div className="bg-surface-container-high px-5 py-3 rounded-xl">
+                  <div className="flex sm:flex-col gap-2 sm:text-right">
+                    <div className="flex-1 sm:flex-none bg-surface-container-high px-4 py-2.5 rounded-xl">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">BMR</span>
-                      <span className="font-headline font-black text-xl text-on-surface">{calorieResult.bmr.toLocaleString()} kcal</span>
+                      <span className="font-headline font-black text-lg text-on-surface">{calorieResult.bmr.toLocaleString()} kcal</span>
                     </div>
-                    <div className="bg-surface-container-high px-5 py-3 rounded-xl">
+                    <div className="flex-1 sm:flex-none bg-surface-container-high px-4 py-2.5 rounded-xl">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">TDEE</span>
-                      <span className="font-headline font-black text-xl text-primary">{calorieResult.tdee.toLocaleString()} kcal</span>
+                      <span className="font-headline font-black text-lg text-primary">{calorieResult.tdee.toLocaleString()} kcal</span>
                     </div>
                   </div>
                 </div>
@@ -821,17 +825,19 @@ export const ActivityPage = () => {
             </div>
 
             {/* Add entry */}
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
               <input type="text" placeholder="Meal / food" value={calFood} onChange={e => setCalFood(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addCalEntry()}
                 className="flex-1 bg-surface-container-lowest border-none rounded-xl text-on-surface p-3 text-sm focus:ring-2 focus:ring-error transition-all" />
-              <input type="number" placeholder="kcal" value={calKcal} onChange={e => setCalKcal(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && addCalEntry()}
-                className="w-28 bg-surface-container-lowest border-none rounded-xl text-on-surface p-3 text-sm focus:ring-2 focus:ring-error transition-all" />
-              <button onClick={addCalEntry}
-                className="px-4 bg-error text-white rounded-xl font-bold text-sm hover:bg-error/80 active:scale-95 transition-all flex items-center gap-1">
-                <Plus size={16} /> Add
-              </button>
+              <div className="flex gap-2">
+                <input type="number" placeholder="kcal" value={calKcal} onChange={e => setCalKcal(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addCalEntry()}
+                  className="flex-1 sm:w-24 bg-surface-container-lowest border-none rounded-xl text-on-surface p-3 text-sm focus:ring-2 focus:ring-error transition-all" />
+                <button onClick={addCalEntry}
+                  className="px-4 bg-error text-white rounded-xl font-bold text-sm hover:bg-error/80 active:scale-95 transition-all flex items-center gap-1 whitespace-nowrap">
+                  <Plus size={16} /> Add
+                </button>
+              </div>
             </div>
 
             {/* Log list */}
