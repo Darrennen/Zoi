@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit3, ChevronRight, History, User, Trash2 } from 'lucide-react';
+import { Plus, Edit3, ChevronRight, History, User, Trash2, Search, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../components/Modal';
@@ -135,6 +135,12 @@ export const StudentsPage = () => {
 
   // Profile modal
   const [profileStudent, setProfileStudent] = useState<Student | null>(null);
+
+  // Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const filteredStudents = students.filter(s =>
+    s.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleEnroll = () => {
     if (!enrollForm.name.trim()) { toast('Please enter a student name', 'error'); return; }
@@ -297,10 +303,40 @@ export const StudentsPage = () => {
         </button>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative mb-6">
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />
+        <input
+          type="text"
+          placeholder="Search students by name..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="w-full bg-surface-container border-none rounded-xl text-on-surface pl-12 pr-12 py-4 focus:ring-2 focus:ring-primary transition-all"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+          >
+            <X size={18} />
+          </button>
+        )}
+      </div>
+
       {/* Student Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
         <AnimatePresence>
-          {students.map(student => (
+          {filteredStudents.length === 0 && searchQuery ? (
+            <motion.div
+              key="no-results"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="col-span-full py-16 flex flex-col items-center gap-3 text-center text-on-surface-variant"
+            >
+              <Search size={36} className="opacity-30" />
+              <p className="font-medium">No students found for "<span className="text-on-surface">{searchQuery}</span>"</p>
+            </motion.div>
+          ) : filteredStudents.map(student => (
             <motion.div key={student.id} layout
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -386,7 +422,7 @@ export const StudentsPage = () => {
           ))}
         </AnimatePresence>
 
-        {students.length === 0 && (
+        {students.length === 0 && !searchQuery && (
           <div className="col-span-full bg-surface-container-low rounded-xl p-16 flex flex-col items-center justify-center gap-4 border border-outline-variant/10">
             <User size={48} className="text-on-surface-variant/30" />
             <p className="text-on-surface-variant font-medium">No students enrolled yet.</p>
