@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef, X, Flame, Share2, Monitor, MonitorOff, Moon, Star } from 'lucide-react';
+import { Timer, TrendingUp, Clock, Plus, Dumbbell, Zap, Activity, ChevronRight, Beef, X, Flame, Share2, Monitor, MonitorOff, Moon, Star, CheckCircle2 } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
+import { useStreak } from '@/src/context/StreakContext';
+import { Ring } from '../components/Ring';
 
 const ACTIVITY_MULTIPLIERS: Record<string, number> = {
   Sedentary: 0.8,
@@ -44,6 +46,7 @@ const FOOD_SOURCES = [
 
 export const ActivityPage = () => {
   const { toast } = useToast();
+  const { addXP } = useStreak();
 
   // Log Session modal
   const [logOpen, setLogOpen] = useState(false);
@@ -82,7 +85,17 @@ export const ActivityPage = () => {
   const addIntake = () => {
     const g = parseFloat(intakeGrams);
     if (!intakeFood.trim() || !g || g <= 0) return;
-    setIntakeLog(prev => [...prev, { id: Date.now(), food: intakeFood.trim(), grams: g }]);
+    setIntakeLog(prev => {
+      const next = [...prev, { id: Date.now(), food: intakeFood.trim(), grams: g }];
+      const newTotal = next.reduce((s, i) => s + i.grams, 0);
+      if (proteinResult && newTotal >= proteinResult.grams && totalConsumed < proteinResult.grams) {
+        toast('🎉 Protein goal crushed! +25 XP', 'success');
+        addXP(25);
+      } else {
+        addXP(10);
+      }
+      return next;
+    });
     setIntakeFood('');
     setIntakeGrams('');
   };
@@ -120,7 +133,17 @@ export const ActivityPage = () => {
   const addCalEntry = () => {
     const k = parseFloat(calKcal);
     if (!calFood.trim() || !k || k <= 0) return;
-    setCalLog(prev => [...prev, { id: Date.now(), food: calFood.trim(), kcal: k }]);
+    setCalLog(prev => {
+      const next = [...prev, { id: Date.now(), food: calFood.trim(), kcal: k }];
+      const newTotal = next.reduce((s, i) => s + i.kcal, 0);
+      if (calorieResult && newTotal >= calorieResult.target * 0.95 && totalKcal < calorieResult.target * 0.95) {
+        toast('🎉 Calorie target hit! +25 XP', 'success');
+        addXP(25);
+      } else {
+        addXP(10);
+      }
+      return next;
+    });
     setCalFood('');
     setCalKcal('');
   };
@@ -152,6 +175,13 @@ export const ActivityPage = () => {
     setSleepBed('');
     setSleepWake('');
     setSleepQuality(0);
+    if (hours >= 7) {
+      toast(`😴 Great sleep! ${hours}h logged. +20 XP`, 'success');
+      addXP(20);
+    } else {
+      toast(`😴 Sleep logged. ${hours}h. +10 XP`, 'info');
+      addXP(10);
+    }
   };
 
   const removeSleepEntry = (id: number) => setSleepLog(prev => prev.filter(i => i.id !== id));
@@ -299,6 +329,94 @@ export const ActivityPage = () => {
           </div>
         )}
       </Modal>
+
+      {/* Daily Goals Rings */}
+      <div className="mb-8 bg-gradient-to-br from-surface-container to-surface-container-high rounded-2xl p-6 md:p-8 shadow-2xl border border-outline-variant/10">
+        <div className="flex items-center gap-2 mb-6">
+          <span className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Today's Goals</span>
+          <div className="flex-1 h-px bg-outline-variant/15" />
+          <span className="text-[10px] text-on-surface-variant">{new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+        </div>
+        <div className="flex flex-wrap justify-around gap-6">
+          {/* Protein Ring */}
+          <div className="flex flex-col items-center gap-3">
+            <Ring
+              pct={progressPct}
+              size={130}
+              color="var(--color-tertiary)"
+              complete={progressPct >= 100}
+            >
+              {progressPct >= 100 ? (
+                <CheckCircle2 size={28} style={{ color: 'var(--color-tertiary)' }} />
+              ) : (
+                <>
+                  <span className="font-headline font-black text-xl" style={{ color: 'var(--color-tertiary)' }}>{totalConsumed}g</span>
+                  <span className="text-[10px] text-on-surface-variant">{proteinResult ? `/${proteinResult.grams}g` : 'no target'}</span>
+                </>
+              )}
+            </Ring>
+            <div className="text-center">
+              <span className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block">Protein</span>
+              <span className="font-bold text-sm" style={{ color: 'var(--color-tertiary)' }}>{progressPct}%</span>
+            </div>
+          </div>
+
+          {/* Calories Ring */}
+          <div className="flex flex-col items-center gap-3">
+            <Ring
+              pct={calProgressPct}
+              size={130}
+              color="var(--color-error)"
+              complete={calProgressPct >= 95}
+            >
+              {calProgressPct >= 95 ? (
+                <CheckCircle2 size={28} style={{ color: 'var(--color-error)' }} />
+              ) : (
+                <>
+                  <span className="font-headline font-black text-xl" style={{ color: 'var(--color-error)' }}>{totalKcal.toLocaleString()}</span>
+                  <span className="text-[10px] text-on-surface-variant">{calorieResult ? `/${calorieResult.target.toLocaleString()}` : 'no target'}</span>
+                </>
+              )}
+            </Ring>
+            <div className="text-center">
+              <span className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block">Calories</span>
+              <span className="font-bold text-sm" style={{ color: 'var(--color-error)' }}>{calProgressPct}%</span>
+            </div>
+          </div>
+
+          {/* Sleep Ring */}
+          <div className="flex flex-col items-center gap-3">
+            {(() => {
+              const lastSleep = sleepLog[0];
+              const sleepPct = lastSleep ? Math.round((lastSleep.hours / 8) * 100) : 0;
+              const sleepColor = 'var(--color-primary)';
+              return (
+                <>
+                  <Ring pct={sleepPct} size={130} color={sleepColor} complete={sleepPct >= 100}>
+                    {sleepPct >= 100 ? (
+                      <CheckCircle2 size={28} style={{ color: sleepColor }} />
+                    ) : lastSleep ? (
+                      <>
+                        <span className="font-headline font-black text-xl" style={{ color: sleepColor }}>{lastSleep.hours}h</span>
+                        <span className="text-[10px] text-on-surface-variant">/8h goal</span>
+                      </>
+                    ) : (
+                      <>
+                        <Moon size={24} className="text-on-surface-variant/40" />
+                        <span className="text-[10px] text-on-surface-variant mt-1">not logged</span>
+                      </>
+                    )}
+                  </Ring>
+                  <div className="text-center">
+                    <span className="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block">Sleep</span>
+                    <span className="font-bold text-sm" style={{ color: sleepColor }}>{sleepPct > 0 ? `${sleepPct}%` : '—'}</span>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      </div>
 
       {/* Bento Grid Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">

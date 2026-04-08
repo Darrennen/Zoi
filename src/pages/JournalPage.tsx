@@ -3,6 +3,7 @@ import { Edit3, BookOpen, TrendingUp, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
+import { useStreak } from '@/src/context/StreakContext';
 
 const LOG_ENTRIES = [
   {
@@ -27,6 +28,7 @@ const LOG_ENTRIES = [
 
 export const JournalPage = () => {
   const { toast } = useToast();
+  const { addXP } = useStreak();
 
   // Form state
   const [formDate, setFormDate] = useState('');
@@ -44,7 +46,8 @@ export const JournalPage = () => {
       toast('Please fill in at least one field.', 'error');
       return;
     }
-    toast('Journal entry committed!');
+    toast('📝 Journal entry committed! +30 XP');
+    addXP(30);
     setFormDate('');
     setFormTask('');
     setFormSkill('');

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { LayoutWrapper } from './components/Layout';
 import { ToastProvider } from './components/Toast';
+import { StreakProvider } from './context/StreakContext';
 import { StudentsPage } from './pages/StudentsPage';
 import { JournalPage } from './pages/JournalPage';
 import { MarketPage } from './pages/MarketPage';
@@ -10,6 +11,7 @@ import { DailyPage } from './pages/DailyPage';
 export default function App() {
   return (
     <Router>
+      <StreakProvider>
       <ToastProvider>
         <LayoutWrapper>
           <Routes>
@@ -21,6 +23,7 @@ export default function App() {
           </Routes>
         </LayoutWrapper>
       </ToastProvider>
+      </StreakProvider>
     </Router>
   );
 }

@@ -8,9 +8,11 @@ import {
   Menu,
   PersonStanding,
   Activity,
-  Layout
+  Layout,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { useStreak } from '@/src/context/StreakContext';
 
 interface NavItemProps {
   to: string;
@@ -51,6 +53,7 @@ const SidebarItem = ({ to, icon: Icon, label }: NavItemProps) => (
 
 export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { streak, level, xp, xpProgress } = useStreak();
 
   return (
     <div className="min-h-screen bg-background text-on-background selection:bg-primary/30">
@@ -65,7 +68,26 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
           </button>
           <h1 className="font-headline font-extrabold tracking-tighter text-4xl text-primary">Darren's HQ</h1>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
+          {/* Streak + Level badges */}
+          <div className="flex items-center gap-2">
+            {streak > 0 && (
+              <div className="flex items-center gap-1.5 bg-surface-container-high px-3 py-1.5 rounded-full border border-outline-variant/10">
+                <span className="text-sm">🔥</span>
+                <span className="font-headline font-black text-sm text-primary">{streak}</span>
+              </div>
+            )}
+            <div className="flex flex-col items-end gap-0.5">
+              <div className="flex items-center gap-1 bg-surface-container-high px-3 py-1 rounded-full border border-outline-variant/10">
+                <Zap size={12} className="text-secondary" />
+                <span className="font-bold text-xs text-secondary">Lv.{level}</span>
+                <span className="text-[10px] text-on-surface-variant ml-1">{xp % 200}/{200} XP</span>
+              </div>
+              <div className="w-full h-0.5 bg-surface-container-highest rounded-full overflow-hidden px-0.5">
+                <div className="h-full bg-secondary rounded-full transition-all duration-700" style={{ width: `${xpProgress}%` }} />
+              </div>
+            </div>
+          </div>
           <nav className="hidden md:flex gap-8">
             <NavLink to="/" className={({ isActive }) => cn("font-label font-bold uppercase tracking-widest text-[10px] transition-colors", isActive ? "text-primary" : "text-on-surface-variant hover:text-white")}>Students</NavLink>
             <NavLink to="/activity" className={({ isActive }) => cn("font-label font-bold uppercase tracking-widest text-[10px] transition-colors", isActive ? "text-primary" : "text-on-surface-variant hover:text-white")}>Life</NavLink>

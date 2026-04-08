@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
+import { useStreak } from '@/src/context/StreakContext';
 
 const TIMELINE_ENTRIES = [
   {
@@ -24,6 +25,7 @@ const TIMELINE_ENTRIES = [
 
 export const DailyPage = () => {
   const { toast } = useToast();
+  const { addXP } = useStreak();
 
   // Mood state (index 1 = Zap is default active)
   const [selectedMood, setSelectedMood] = useState(1);
@@ -41,7 +43,8 @@ export const DailyPage = () => {
       toast('Please fill in at least one field.', 'error');
       return;
     }
-    toast('Daily entry committed!');
+    toast('✍️ Daily reflection committed! +30 XP');
+    addXP(30);
     setWentWell('');
     setImprove('');
     setTomorrow('');
